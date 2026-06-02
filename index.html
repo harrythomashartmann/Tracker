@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracker Database</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.page {
+    display: none;
+}
+
+.active {
+    display: block;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+th {
+    background: #f2f2f2;
+}
+
+.duplicate {
+    background-color: red;
+    color: white;
+}
+</style>
+</head>
+<body>
+
+<!-- INPUT PAGE -->
+<div id="inputPage" class="page active">
+
+    <h1>Tracker</h1>
+
+    <label>Name</label>
+    <input type="text" id="name">
+
+    <label>Feedback</label>
+    <input type="text" id="feedback">
+
+    <button onclick="saveRecord()">Track</button>
+
+    <button onclick="showDatabase()">
+        View Database
+    </button>
+
+</div>
+
+<!-- DATABASE PAGE -->
+<div id="databasePage" class="page">
+
+    <h1>Database Records</h1>
+
+    <table id="recordsTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Feedback</th>
+                <th>Date Added</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button onclick="showInput()">
+        Back
+    </button>
+
+</div>
+
+<script>
+
+function getRecords() {
+    return JSON.parse(
+        localStorage.getItem("records") || "[]"
+    );
+}
+
+function saveRecords(records) {
+    localStorage.setItem(
+        "records",
+        JSON.stringify(records)
+    );
+}
+
+function saveRecord() {
+
+    const name =
+        document.getElementById("name").value.trim();
+
+    const feedback =
+        document.getElementById("feedback").value.trim();
+
+    if (!name || !feedback) {
+        alert("Please complete all fields.");
+        return;
+    }
+
+    const records = getRecords();
+
+    const now = new Date();
+
+    const dateAdded =
+        now.toLocaleDateString() +
+        " " +
+        now.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+    records.unshift({
+        name: name,
+        feedback: feedback,
+        date: dateAdded
+    });
+
+    saveRecords(records);
+
+    document.getElementById("name").value = "";
+    document.getElementById("feedback").value = "";
+
+    alert("Record saved successfully.");
+}
+
+function showInput() {
+
+    document.getElementById("databasePage")
+        .classList.remove("active");
+
+    document.getElementById("inputPage")
+        .classList.add("active");
+}
+
+function showDatabase() {
+
+    loadDatabase();
+
+    document.getElementById("inputPage")
+        .classList.remove("active");
+
+    document.getElementById("databasePage")
+        .classList.add("active");
+}
+
+function loadDatabase() {
+
+    const tbody =
+        document.querySelector(
+            "#recordsTable tbody"
+        );
+
+    tbody.innerHTML = "";
+
+    const records = getRecords();
+
+    const nameCounts = {};
+
+    records.forEach(record => {
+
+        const key =
+            record.name.trim().toLowerCase();
+
+        nameCounts[key] =
+            (nameCounts[key] || 0) + 1;
+    });
+
+    records.forEach(record => {
+
+        const row =
+            document.createElement("tr");
+
+        const key =
+            record.name.trim().toLowerCase();
+
+        if (nameCounts[key] > 1) {
+            row.classList.add("duplicate");
+        }
+
+        row.innerHTML = `
+            <td>${record.name}</td>
+            <td>${record.feedback}</td>
+            <td>${record.date}</td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+</script>
+
+</body>
+</html>
